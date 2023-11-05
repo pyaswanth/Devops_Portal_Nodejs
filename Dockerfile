@@ -11,8 +11,9 @@ COPY package*.json ./
 RUN npm install
 
 # Copy the rest of the application code
-# COPY . .
-COPY --chown=node:node . .
+COPY . .
+
+
 
 # Build the React app
 # RUN npm run build
@@ -21,4 +22,4 @@ COPY --chown=node:node . .
 EXPOSE 8001
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
