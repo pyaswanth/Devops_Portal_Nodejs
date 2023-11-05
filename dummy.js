@@ -1,11 +1,12 @@
 import { performance } from 'perf_hooks';
 
-// Start the timer
+// Start the timer 
 const startTime = performance.now();
 
 // Your task here
 // Example task: adding numbers from 1 to 10000000
 let sum = 0;
+let a ="hello"
 for (let i = 1; i <= 1000000000000000; i++) {
     sum += i;
 }
