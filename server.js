@@ -17,12 +17,12 @@ app.use(bodyParser.json());
 
 
 import organizationroute from './Routes/AutoInfra/Organizations/Organizations.js'
-import usersroute from'./Routes/Users/Users.js'
+import usersroute from './Routes/Users/Users.js'
 import inventoryroute from './Routes/AutoInfra/Inventory/Inventory.js'
 import projectroute from './Routes/AutoInfra/Projects/Projects.js'
-import { createPort } from './PortCreation.js';
+import { ansibleExec } from './ansibleExecution.js';
 import { request } from 'http';
-import { streamLineTask,getCommand } from './extractData.js';
+import { streamLineTask, getCommand } from './extractData.js';
 
 // import { parseTextToJSON } from './extractData.js';
 // import jobsroute from './Routes/AutoInfra/NewJob/NewJob.js'
@@ -37,44 +37,44 @@ const connectionString = 'mongodb+srv://yaswanth:Yaswanth%4001@cluster0.jdcz7eb.
 
 //connecting mongodb
 mongoose.connect(connectionString, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() =>{let a =""} )
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => { let a = "" })
   .catch((error) => console.error('Error connecting to MongoDB Atlas:', error));
 
-  // sshconn.on('ready', () => {
-  //   let a=""
-  //   // console.log('SSH connection established');
-  
-  // });
-  
+// sshconn.on('ready', () => {
+//   let a=""
+//   // console.log('SSH connection established');
 
-  // sshconn.connect({
-  //   host: '172.17.36.68',
-  //   username: 'devopsadm',
-  //   port: 22,
-  //   privateKey: fs.readFileSync('devopsadm.pem', { encoding: "utf8" })
-  //   // password: 'Cm7D5@vN*Z1eq'
-  // });
-
-  
-  
+// });
 
 
-  app.use('/api/users',usersroute)
-  app.use('/api/dashboard-autoinfra',organizationroute)
-  app.use('/api/dashboard-autoinfra',inventoryroute)
-  app.use('/api/dashboard-autoinfra',projectroute)
-  // app.use('/api/dashboard-autoinfra',jobsroute)
- 
+// sshconn.connect({
+//   host: '172.17.36.68',
+//   username: 'devopsadm',
+//   port: 22,
+//   privateKey: fs.readFileSync('devopsadm.pem', { encoding: "utf8" })
+//   // password: 'Cm7D5@vN*Z1eq'
+// });
+
+
+
+
+
+app.use('/api/users', usersroute)
+app.use('/api/dashboard-autoinfra', organizationroute)
+app.use('/api/dashboard-autoinfra', inventoryroute)
+app.use('/api/dashboard-autoinfra', projectroute)
+// app.use('/api/dashboard-autoinfra',jobsroute)
+
 
 
 // app.post('/api/dashboard-autoinfra/jobs/getdata',async (req, res) => {
 //   console.log("-----------------------")
 //   const data = req.body;
 //   console.log('job',data);
-  
+
 //   let responseSent = false;
 //   const sendResponse = (output) => {
 //     if (!responseSent) {
@@ -108,8 +108,8 @@ mongoose.connect(connectionString, {
 //   }
 // });
 
-// export const createPort = async (server, port) => {
-//   console.log('inside-createPort');
+// export const ansibleExec = async (server, port) => {
+//   console.log('inside-ansibleExec');
 //   let output = '';
 
 //   const location = "./../ceopsmgmt/ansible_scripts/testing/";
@@ -168,19 +168,19 @@ const getApproval = async (task) => {
   return approvalStatus;
 }
 
-app.post ('/api/teamsMessage',async(req,res)=>{
+app.post('/api/teamsMessage', async (req, res) => {
 
   const now = new Date();
-    
 
-    console.log("----------------------------------")
-    console.log("Problem Triggered through Teams")
-    console.log("----------------------------------")
 
-  try{
+  console.log("----------------------------------")
+  console.log("Problem Triggered through Teams")
+  console.log("----------------------------------")
+
+  try {
     // Start the timer
     const startTime = performance.now();
-    
+
 
     const requestData = req.body;
 
@@ -199,39 +199,48 @@ app.post ('/api/teamsMessage',async(req,res)=>{
 
     const { server_names: serverNames, problem, ports } = response.data;
 
-    const dataarray = [problem[0],serverNames[0],ports[0]]
+    const dataarray = [problem[0], serverNames[0], ports[0]]
 
     console.log()
 
     console.log('Problem:', problem);
     console.log('Server Name:', serverNames);
-    console.log('Port:',ports)
+    console.log('Port:', ports)
 
-    let result =""
-    if(streamLineTask(dataarray)){
-      console.log("------------------------")
-      console.log("Requested for approval")
-      console.log("------------------------")
-      result = await getApproval(requestData.body)
-    }
-    else{
-      result = "Approve"
+    let result = "";
+    let streamLineResult = await streamLineTask(dataarray);
+
+    if (streamLineResult === "sensitive") {
+      console.log("------------------------");
+      console.log("Requested for approval");
+      console.log("------------------------");
+      result = await getCommand(requestData.body);
+    } else if (streamLineResult === "non sensitive") {
+      result = "Approve";
+    } else if (streamLineResult === "new task") {
+      result = "new task";
     }
 
     let output = ""
 
-    if(result==="Approve"){
-       let command = await getCommand(dataarray)
-       output= await createPort(command)  
-       console.log("----------------------------------")
-        console.log("Task has been completed by Ansible!!!")
-        console.log("----------------------------------")
+    if (result === "Approve") {
+      let command;
+      if (dataarray[0].includes("av update")) {
+        command = await getRPA(dataarray);
+      } else {
+        command = await getCommand(dataarray);
+        output = await ansibleExec(command);
+      }
+
+      console.log("----------------------------------");
+      console.log("Task has been completed by Ansible!!!");
+      console.log("----------------------------------");
     }
-    else{
+    else {
       output = "Your Request has been Rejected."
-        console.log("--------------------------")
-        console.log("Request has been Rejected")
-        console.log("--------------------------")
+      console.log("--------------------------")
+      console.log("Request has been Rejected")
+      console.log("--------------------------")
     }
     // console.log("output---->",output)
 
@@ -242,16 +251,16 @@ app.post ('/api/teamsMessage',async(req,res)=>{
     const timeTakenInMilliseconds = endTime - startTime;
 
     // Convert milliseconds to minutes and seconds
-      const timeTakenInMinutes = Math.floor(timeTakenInMilliseconds / 60000);
-      const remainingMilliseconds = timeTakenInMilliseconds % 60000;
-      const timeTakenInSeconds = remainingMilliseconds / 1000;
+    const timeTakenInMinutes = Math.floor(timeTakenInMilliseconds / 60000);
+    const remainingMilliseconds = timeTakenInMilliseconds % 60000;
+    const timeTakenInSeconds = remainingMilliseconds / 1000;
 
-      const roundedSeconds = timeTakenInSeconds.toFixed(4);
+    const roundedSeconds = timeTakenInSeconds.toFixed(4);
 
-      // Output the time taken in minutes and seconds
-      console.log(`Time taken: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`);
+    // Output the time taken in minutes and seconds
+    console.log(`Time taken: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`);
 
-      const performedTime = `Time taken to complete the task: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`
+    const performedTime = `Time taken to complete the task: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`
 
 
     const data = {
@@ -261,33 +270,33 @@ app.post ('/api/teamsMessage',async(req,res)=>{
       "status": result,
       "output": output,
       "name": response.data.problem[0],
-      "performedTime":performedTime,
+      "performedTime": performedTime,
     }
 
     // console.log(data)
-    res.status(200).json(data);		
+    res.status(200).json(data);
 
 
 
-}catch (error) {
-  console.error('Error handling POST request:', error);
-  res.status(500).json({ error: 'Internal server error' });
-}
-  
+  } catch (error) {
+    console.error('Error handling POST request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+
 })
 
 
 
-app.post('/api/email', async(req, res) => {
+app.post('/api/email', async (req, res) => {
   const now = new Date();
-    // Get current date
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    // Get current timezone
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Get current date
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  // Get current timezone
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    console.log("----------------------------------")
-    console.log("Problem Triggered through Mail")
-    console.log("----------------------------------")
+  console.log("----------------------------------")
+  console.log("Problem Triggered through Mail")
+  console.log("----------------------------------")
 
   try {
 
@@ -297,7 +306,7 @@ app.post('/api/email', async(req, res) => {
     // const startTime= now.toLocaleTimeString();
     // const startDate = now.toLocaleDateString(undefined, options);
     // const startTimeInfo = `${startTime} - ${startDate} - ${timeZone}`;
-    
+
     const requestData = req.body;
 
     const input_sentence = {
@@ -315,7 +324,7 @@ app.post('/api/email', async(req, res) => {
 
     const { server_names: serverNames, problem, ports } = response.data;
 
-    const dataarray = [problem[0],serverNames[0],ports[0]]
+    const dataarray = [problem[0], serverNames[0], ports[0]]
 
 
     // console.log(dataarray)
@@ -324,31 +333,40 @@ app.post('/api/email', async(req, res) => {
     // console.log('Server Name:', response.data[1]);
     // console.log('Port:',response.data[2])
 
-    let result=""
-    if(await streamLineTask(dataarray)){
-      console.log("------------------------")
-      console.log("Requested for approval")
-      console.log("------------------------")
-      result = await getApproval(requestData.body)
-    }
-    else{
-      result = "Approve"
+    let result = "";
+    let streamLineResult = await streamLineTask(dataarray);
+
+    if (streamLineResult === "sensitive") {
+      console.log("------------------------");
+      console.log("Requested for approval");
+      console.log("------------------------");
+      result = await getCommand(requestData.body);
+    } else if (streamLineResult === "non sensitive") {
+      result = "Approve";
+    } else if (streamLineResult === "new task") {
+      result = "new task";
     }
 
     let output = ""
 
-    if(result==="Approve"){
-       let command = await getCommand(dataarray)
-       output= await createPort(command)  
-       console.log("----------------------------------")
-        console.log("Task has been completed by Ansible!!!")
-        console.log("----------------------------------")
+    if (result === "Approve") {
+      let command;
+      if (dataarray[0].includes("av update")) {
+        command = await getRPA(dataarray);
+      } else {
+        command = await getCommand(dataarray);
+        output = await ansibleExec(command);
+      }
+
+      console.log("----------------------------------");
+      console.log("Task has been completed by Ansible!!!");
+      console.log("----------------------------------");
     }
-    else{
+    else {
       output = "Your Request has been Rejected."
-        console.log("--------------------------")
-        console.log("Request has been Rejected")
-        console.log("--------------------------")
+      console.log("--------------------------")
+      console.log("Request has been Rejected")
+      console.log("--------------------------")
     }
 
     // const endTime= now.toLocaleTimeString();
@@ -361,18 +379,18 @@ app.post('/api/email', async(req, res) => {
     const timeTakenInMilliseconds = endTime - startTime;
 
     // Convert milliseconds to minutes and seconds
-      const timeTakenInMinutes = Math.floor(timeTakenInMilliseconds / 60000);
-      const remainingMilliseconds = timeTakenInMilliseconds % 60000;
-      const timeTakenInSeconds = remainingMilliseconds / 1000;
+    const timeTakenInMinutes = Math.floor(timeTakenInMilliseconds / 60000);
+    const remainingMilliseconds = timeTakenInMilliseconds % 60000;
+    const timeTakenInSeconds = remainingMilliseconds / 1000;
 
-      const roundedSeconds = timeTakenInSeconds.toFixed(4);
+    const roundedSeconds = timeTakenInSeconds.toFixed(4);
 
-      // Output the time taken in minutes and seconds
-      console.log(`Time taken: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`);
+    // Output the time taken in minutes and seconds
+    console.log(`Time taken: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`);
 
-      const performedTime = `Time taken to complete the task: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`
+    const performedTime = `Time taken to complete the task: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`
 
-    
+
     // const data = {
     //   "subject": requestData.subject,
     //   "body": response.data,
@@ -388,11 +406,11 @@ app.post('/api/email', async(req, res) => {
       // "endTime":endTimeInfo,
       "status": result,
       "output": output,
-      "performedTime":performedTime,
+      "performedTime": performedTime,
     }
 
     // console.log(data)
-    res.status(200).json(data);		
+    res.status(200).json(data);
   } catch (error) {
     console.error('Error handling POST request:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -405,17 +423,17 @@ app.post('/api/email', async(req, res) => {
 
 
 
-  
- 
+
+
 
 
 app.listen(PORT, async () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    // const tunnel = await localtunnel({ port: 8000 });
-    // console.log('Tunnel URL:', tunnel.url);
-    // tunnel.on('close', () => {
-    //   console.log('Tunnel has been closed');
-    // });
+  console.log(`Server is running on http://localhost:${PORT}`);
+  // const tunnel = await localtunnel({ port: 8000 });
+  // console.log('Tunnel URL:', tunnel.url);
+  // tunnel.on('close', () => {
+  //   console.log('Tunnel has been closed');
+  // });
 
-  });
+});
 
