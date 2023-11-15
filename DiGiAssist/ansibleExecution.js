@@ -15,6 +15,7 @@ sshconn.connect({
 
   const extractRegisteredVariableValue = (output) => {
     try {
+      const  outputData = output.trim();
       if (output.includes('unreachable!=0') || output.includes('failed!=0')) {
         console.log('Error occured during execution!!!');
         return
@@ -22,28 +23,29 @@ sshconn.connect({
       else {
         console.log('Playbook executed successfully!!')
       }
-      outputData = output.trim();
+      
       const jsonData = JSON.stringify(outputData, null, 2);
       // console.log('Data as JSON:', jsonData);
   
       const parsedData = JSON.parse(jsonData); // Parse JSON string to object
       // console.log('Parsed Data:', parsedData);
-      Messages = [];
+      // Messages = [];
       const lines = parsedData.split('\n');
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         if (line.includes('Print URL status')) {
-          const nextLine = lines[i + 2];
+          const nextLine = lines[i + 3];
           if (nextLine && nextLine.includes('msg": "')) {
             // const errorMessage = nextLine.split('msg": "')[1].split('"')[0];
             // console.log('Message:', errorMessage);
-            for (let j = i + 2; j < lines.length; j += 3) {
+            for (let j = i + 3; j < lines.length; j += 3) {
               const nextMessageLine = lines[j];
               if (nextMessageLine.includes('msg": "')) {
                 const nextMessage = `${nextMessageLine.split('msg": "')[1].split('"')[0]
                   .replace(/\\n/g, '\n')}
                         `;
-                Messages.push(nextMessage);
+                // Messages.push(nextMessage);
+                console.log(nextMessage)
               } else {
                 break; 
               }
@@ -69,7 +71,7 @@ sshconn.connect({
   };
  
   export const ansibleExec = async (cmd) => {
-    console.log('inside-createPort');
+    // console.log('inside-createPort');
     let output = '';
   
     // const location = "./../ceopsmgmt/ansible_scripts/";
@@ -81,6 +83,7 @@ sshconn.connect({
       output = await new Promise((resolve, reject) => {
         sshconn.exec(cmd, (err, stream) => {
           if (err) {
+            console.log('err')
             reject(err);
             return;
           }
@@ -88,11 +91,11 @@ sshconn.connect({
           let output = '';
   
           stream.on('close', (code, signal) => {
-            console.log('Stream closed with code ' + code + ' and signal ' + signal);
+            // console.log('Stream closed with code ' + code + ' and signal ' + signal);
             resolve(output); // Resolve the Promise with the collected output
           }).on('data', (data) => {
             output += data;
-            console.log('Received output from Ansible: ' + data);
+            console.log(' ' + data);
           });
         });
       });
@@ -101,7 +104,7 @@ sshconn.connect({
     }
 
     // Extract the registered variable's value from the output
-  // const registeredVariableValue = await extractRegisteredVariableValue(output);
+  const registeredVariableValue = await extractRegisteredVariableValue(output);
 
   // return registeredVariableValue;
   return output
