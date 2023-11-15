@@ -20,14 +20,13 @@ import organizationroute from './Routes/AutoInfra/Organizations/Organizations.js
 import usersroute from './Routes/Users/Users.js'
 import inventoryroute from './Routes/AutoInfra/Inventory/Inventory.js'
 import projectroute from './Routes/AutoInfra/Projects/Projects.js'
-import { ansibleExec } from './ansibleExecution.js';
+import { ansibleExec } from './DiGiAssist/ansibleExecution.js';
 import { request } from 'http';
-import { streamLineTask, getCommand } from './extractData.js';
+import { streamLineTask, getCommand } from './DiGiAssist/extractData.js';
+import DiGiAssist from './DiGiAssist/DiGiAssist.js';
 
-// import { parseTextToJSON } from './extractData.js';
+
 // import jobsroute from './Routes/AutoInfra/NewJob/NewJob.js'
-
-const azureFunctionUrl = "https://slahttprequest.azurewebsites.net/api/HttpTrigger1?code=aSM4UV0Xj2fkGsqvhdblcisahKGrFa0uZUEj8SyVRNv0AzFu-ALeZg=="
 
 
 
@@ -145,282 +144,48 @@ app.use('/api/dashboard-autoinfra', projectroute)
 
 
 
-const getApproval = async (task) => {
-  let approvalStatus = "";
-  try {
-    const data = {
-      taskRequest: task
-    };
-
-    // console.log(data);
-
-    const response = await axios.post(
-      "https://prod-24.eastus.logic.azure.com:443/workflows/b32816812d6c46ecbbde3b5e8b53d1df/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=bTnGGPVxLgoiiJGbAtK1lKCm2dpRakEfHBfUMChmCvQ",
-      data
-    );
-
-    console.log("comment-response", response.data);
-    approvalStatus = response.data.SelectedOption;
-  } catch (error) {
-    console.error("Error handling POST request:", error);
-  }
-
-  return approvalStatus;
-}
-
 app.post('/api/teamsMessage', async (req, res) => {
-
-  const now = new Date();
-
 
   console.log("----------------------------------")
   console.log("Problem Triggered through Teams")
   console.log("----------------------------------")
 
-  try {
-    // Start the timer
-    const startTime = performance.now();
+   try {
 
+    const digiresult = await DiGiAssist(req)
+    // console.log(digiresult);
+  
+     res.status(200).json(digiresult);
 
-    const requestData = req.body;
-
-    const input_sentence = {
-
-      email_text: requestData.body,
-
-    };
-
-
-    const apiUrl = "https://db01-34-70-12-44.ngrok.io/extract_info"
-
-    const response = await axios.post(apiUrl, input_sentence);
-
-    console.log('API Response:', response.data); // Add this line to inspect the response
-
-    const { server_names: serverNames, problem, ports } = response.data;
-
-    const dataarray = [problem[0], serverNames[0], ports[0]]
-
-    console.log()
-
-    console.log('Problem:', problem);
-    console.log('Server Name:', serverNames);
-    console.log('Port:', ports)
-
-    let result = "";
-    let streamLineResult = await streamLineTask(dataarray);
-
-    if (streamLineResult === "sensitive") {
-      console.log("------------------------");
-      console.log("Requested for approval");
-      console.log("------------------------");
-      result = await getCommand(requestData.body);
-    } else if (streamLineResult === "non sensitive") {
-      result = "Approve";
-    } else if (streamLineResult === "new task") {
-      result = "new task";
-    }
-
-    let output = ""
-
-    if (result === "Approve") {
-      let command;
-      if (dataarray[0].includes("av update")) {
-        command = await getRPA(dataarray);
-      } else {
-        command = await getCommand(dataarray);
-        output = await ansibleExec(command);
-      }
-
-      console.log("----------------------------------");
-      console.log("Task has been completed by Ansible!!!");
-      console.log("----------------------------------");
-    }
-    else {
-      output = "Your Request has been Rejected."
-      console.log("--------------------------")
-      console.log("Request has been Rejected")
-      console.log("--------------------------")
-    }
-    // console.log("output---->",output)
-
-
-    const endTime = performance.now();
-
-    // Calculate the time taken in milliseconds
-    const timeTakenInMilliseconds = endTime - startTime;
-
-    // Convert milliseconds to minutes and seconds
-    const timeTakenInMinutes = Math.floor(timeTakenInMilliseconds / 60000);
-    const remainingMilliseconds = timeTakenInMilliseconds % 60000;
-    const timeTakenInSeconds = remainingMilliseconds / 1000;
-
-    const roundedSeconds = timeTakenInSeconds.toFixed(4);
-
-    // Output the time taken in minutes and seconds
-    console.log(`Time taken: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`);
-
-    const performedTime = `Time taken to complete the task: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`
-
-
-    const data = {
-      // "subject": requestData.subject,
-      "body": response.data,
-      // "result":output,
-      "status": result,
-      "output": output,
-      "name": response.data.problem[0],
-      "performedTime": performedTime,
-    }
-
-    // console.log(data)
-    res.status(200).json(data);
-
-
-
-  } catch (error) {
-    console.error('Error handling POST request:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+   } catch (error) {
+     console.error('Error handling POST request:', error);
+     res.status(500).json({ error: 'Internal server error' });
+   }
 
 })
 
 
 
 app.post('/api/email', async (req, res) => {
-  const now = new Date();
-  // Get current date
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  // Get current timezone
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
+  
   console.log("----------------------------------")
   console.log("Problem Triggered through Mail")
   console.log("----------------------------------")
 
-  try {
+   try {
 
-    // Start the timer
-    const startTime = performance.now();
+    const digiresult = await DiGiAssist(req)
 
-    // const startTime= now.toLocaleTimeString();
-    // const startDate = now.toLocaleDateString(undefined, options);
-    // const startTimeInfo = `${startTime} - ${startDate} - ${timeZone}`;
+    console.log(digiresult);
 
-    const requestData = req.body;
+    console.log('---------------')
 
-    const input_sentence = {
-
-      email_text: requestData.body,
-
-    };
-
-
-    const apiUrl = "https://db01-34-70-12-44.ngrok.io/extract_info"
-
-    const response = await axios.post(apiUrl, input_sentence);
-
-    console.log('API Response:', response.data); // Add this line to inspect the response
-
-    const { server_names: serverNames, problem, ports } = response.data;
-
-    const dataarray = [problem[0], serverNames[0], ports[0]]
-
-
-    // console.log(dataarray)
-
-    // console.log('Problem:', response.data[0]);
-    // console.log('Server Name:', response.data[1]);
-    // console.log('Port:',response.data[2])
-
-    let result = "";
-    let streamLineResult = await streamLineTask(dataarray);
-
-    if (streamLineResult === "sensitive") {
-      console.log("------------------------");
-      console.log("Requested for approval");
-      console.log("------------------------");
-      result = await getCommand(requestData.body);
-    } else if (streamLineResult === "non sensitive") {
-      result = "Approve";
-    } else if (streamLineResult === "new task") {
-      result = "new task";
-    }
-
-    let output = ""
-
-    if (result === "Approve") {
-      let command;
-      if (dataarray[0].includes("av update")) {
-        command = await getRPA(dataarray);
-      } else {
-        command = await getCommand(dataarray);
-        output = await ansibleExec(command);
-      }
-
-      console.log("----------------------------------");
-      console.log("Task has been completed by Ansible!!!");
-      console.log("----------------------------------");
-    }
-    else {
-      output = "Your Request has been Rejected."
-      console.log("--------------------------")
-      console.log("Request has been Rejected")
-      console.log("--------------------------")
-    }
-
-    // const endTime= now.toLocaleTimeString();
-    // const endDate = now.toLocaleDateString(undefined, options);
-    // const endTimeInfo = `${endTime} - ${endDate} - ${timeZone}`;
-
-    const endTime = performance.now();
-
-    // Calculate the time taken in milliseconds
-    const timeTakenInMilliseconds = endTime - startTime;
-
-    // Convert milliseconds to minutes and seconds
-    const timeTakenInMinutes = Math.floor(timeTakenInMilliseconds / 60000);
-    const remainingMilliseconds = timeTakenInMilliseconds % 60000;
-    const timeTakenInSeconds = remainingMilliseconds / 1000;
-
-    const roundedSeconds = timeTakenInSeconds.toFixed(4);
-
-    // Output the time taken in minutes and seconds
-    console.log(`Time taken: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`);
-
-    const performedTime = `Time taken to complete the task: ${timeTakenInMinutes} minutes and ${roundedSeconds} seconds.`
-
-
-    // const data = {
-    //   "subject": requestData.subject,
-    //   "body": response.data,
-    //   "result":output,
-    //   "startTime":startTimeInfo,
-    //   "endTime":endTimeInfo
-    // }
-
-    const data = {
-      "subject": requestData.subject,
-      "body": response.data,
-      // "startTime":startTimeInfo,
-      // "endTime":endTimeInfo,
-      "status": result,
-      "output": output,
-      "performedTime": performedTime,
-    }
-
-    // console.log(data)
-    res.status(200).json(data);
+    res.status(200).json(digiresult);
   } catch (error) {
     console.error('Error handling POST request:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+     res.status(500).json({ error: 'Internal server error' });
+   }
 });
-
-
-
-
-
 
 
 
