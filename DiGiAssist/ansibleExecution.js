@@ -16,36 +16,40 @@ sshconn.connect({
   const extractRegisteredVariableValue = (output) => {
     try {
       const  outputData = output.trim();
-      if (output.includes('unreachable!=0') || output.includes('failed!=0')) {
-        console.log('Error occured during execution!!!');
-        return
+      if (output.includes('unreachable=0') && output.includes('failed=0')) {
+        console.log('Playbook executed successfully!!')
+        
       }
       else {
-        console.log('Playbook executed successfully!!')
+        console.log('Error occured during execution!!!');
       }
-      
+      // console.log(outputData)
       const jsonData = JSON.stringify(outputData, null, 2);
       // console.log('Data as JSON:', jsonData);
   
       const parsedData = JSON.parse(jsonData); // Parse JSON string to object
       // console.log('Parsed Data:', parsedData);
       // Messages = [];
+      // console.log(jsonData)
+      const substringsToCheck = ['"msg": "', '"msg":'];
       const lines = parsedData.split('\n');
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (line.includes('Print URL status')) {
-          const nextLine = lines[i + 3];
-          if (nextLine && nextLine.includes('msg": "')) {
+        if (line.includes('Display Output')) {
+          const nextLine = lines[i + 2];
+          if (nextLine && nextLine.includes('"msg": "')) {
             // const errorMessage = nextLine.split('msg": "')[1].split('"')[0];
             // console.log('Message:', errorMessage);
-            for (let j = i + 3; j < lines.length; j += 3) {
+            for (let j = i + 2; j < lines.length; j += 1) {
               const nextMessageLine = lines[j];
-              if (nextMessageLine.includes('msg": "')) {
-                const nextMessage = `${nextMessageLine.split('msg": "')[1].split('"')[0]
+              if (nextMessageLine.includes('"msg": "' )) {
+                const nextMessage = `${nextMessageLine.split('"msg": "')[1].split('"')[0]
                   .replace(/\\n/g, '\n')}
                         `;
                 // Messages.push(nextMessage);
+                // const nextMsgObj = JSON.parse(nextMessage)
                 console.log(nextMessage)
+                return nextMessage
               } else {
                 break; 
               }
@@ -95,7 +99,7 @@ sshconn.connect({
             resolve(output); // Resolve the Promise with the collected output
           }).on('data', (data) => {
             output += data;
-            console.log(' ' + data);
+            // console.log(output);
           });
         });
       });
@@ -107,5 +111,5 @@ sshconn.connect({
   const registeredVariableValue = await extractRegisteredVariableValue(output);
 
   // return registeredVariableValue;
-  return output
+  return registeredVariableValue
   }

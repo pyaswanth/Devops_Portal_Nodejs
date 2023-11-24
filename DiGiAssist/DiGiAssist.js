@@ -1,6 +1,10 @@
 import { ansibleExec } from './ansibleExecution.js';
 import { streamLineTask, getCommand } from './extractData.js';
 import getApproval from './GetApproval.js';
+import { getRPA } from './rpaExecution.js';
+import { jobid } from './extractData.js';
+import { getCheck } from './rpaExecution.js';
+import { getSend } from './rpaExecution.js';
 
 const DiGiAssist = async(req) => {
 
@@ -31,7 +35,7 @@ const DiGiAssist = async(req) => {
 
         // const dataarray = ["users list", "Management-VM", "3394"]
 
-        const dataarray = ["running services", "Management-VM", "N/A"]
+        const dataarray = ["disk info", "Management-VM", "N/A"]
 
 
         let result = "";
@@ -44,9 +48,9 @@ const DiGiAssist = async(req) => {
             console.log("------------------------");
             console.log("Requested for approval");
             console.log("------------------------");
-            // result = "Approve"
+            result = "Approve"
             // result = await getApproval(requestData.body)
-            result = await getApproval(dataarray)
+            // result = await getApproval(dataarray)
 
         } else if (streamLineResult[2] === "non sensitive") {
             result = "Approve"
@@ -60,15 +64,24 @@ const DiGiAssist = async(req) => {
         if (result === "Approve") {
             let command;
             if (streamLineResult[1] === "RPA") {
-
-                command = await getRPA(dataarray);
-
+                let job = await jobid(dataarray)
+                console.log(job)
+                const output1 =  await getRPA(job);
+                console.log(output1)
+                
+                console.log("---before----")
+                let rs1=await getCheck(output1)
+                console.log(`${rs1} output in digissist`)
+                console.log("---after----")
             }
             else if (streamLineResult[1] === "Ansible") {
 
                 command = await getCommand(dataarray);
                 console.log(command)
-                output = await ansibleExec(command);
+                let output_ans = await ansibleExec(command);
+                console.log(`digi output \n ${output_ans}`)
+                let a=await getApproval(output_ans)
+                console.log(a)
 
             }
             console.log("----------------------------------");

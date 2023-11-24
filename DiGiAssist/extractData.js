@@ -26,12 +26,15 @@ let urls =
    "itop website":"www.support.kaarcloud.com",
 }
 
-
-
+//ansible playbook execution
+//with getCommand
 export const getCommand = (modelOutput) => {
   const location = "./../ceopsmgmt/ansible_scripts/testing/";
   if (modelOutput[0].toLowerCase().trim() === "add port") {
-    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "port=${modelOutput[2]}" ${location}add-firewall-ports.yml`
+    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "port_no=${modelOutput[2]}" -e "option='open'" ${location}port-management.yml`
+  }
+  if (modelOutput[0].toLowerCase().trim() === "remove port") {
+    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "port_no=${modelOutput[2]}" -e "option='close'" ${location}port-management.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "os version") {
     return `ansible-playbook -e "sysid=${modelOutput[1]}" ${location}os-info.yml`
@@ -43,7 +46,7 @@ export const getCommand = (modelOutput) => {
     return `ansible-playbook -e "sysid=${modelOutput[1]}" ${location}list-open-ports.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "running services") {
-    return `ansible-playbook -e "sysid=${modelOutput[1]}" $7{location}get-running-services.yml`
+    return `ansible-playbook -e "sysid=${modelOutput[1]}" ${location}get-running-services.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "users list") {
     return `ansible-playbook -e "sysid=${modelOutput[1]}" ${location}get-users.yml`
@@ -55,13 +58,13 @@ export const getCommand = (modelOutput) => {
     return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "package_state=absent" "package_name=${modelOutput.service}" ${location}manage-package-rhel.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "start service") {
-    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "service_state=present" "service_name=${modelOutput.service}" ${location}manage-services.yml`
+    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "service_state=present" -e "service_name=${modelOutput.service}" ${location}manage-services.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "stop service") {
-    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "service_state=stopped" "service_name=${modelOutput.service}" ${location}manage-services.yml`
+    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "service_state=stopped" -e "service_name=${modelOutput[2]}" ${location}manage-services.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "restart_service") {
-    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "service_state=restarted" "service_name=${modelOutput.service}" ${location}manage-services.yml`
+    return `ansible-playbook -e "sysid=${modelOutput[1]}" -e "service_state=restarted" -e "service_name=${modelOutput.service}" ${location}manage-services.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "ssl certification expiration") {
     return `ansible-playbook -e "url=${urls[modelOutput[1]]}" ${location}ssl-cert-expiry-check.yml`
@@ -71,6 +74,12 @@ export const getCommand = (modelOutput) => {
     console.log("Need to add this problem to the list")
   }
 
+}
+
+export const jobid= async (modelOutput)=>{
+  if(modelOutput[1]=="replicationId"){
+    return "cca1acb0-1996-429b-9e6c-84a9a728dc4f"
+  }
 }
 
 export const streamLineTask = async (modelOutput) => {
@@ -87,4 +96,6 @@ export const streamLineTask = async (modelOutput) => {
   }
 
 }
+
+
 

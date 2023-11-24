@@ -1,77 +1,136 @@
-
 import axios from 'axios';
-let job_id = ""
 
- axios.post("https:cloud.robocorp.com/api/v1/workspaces/29f4b8c4-0f50-4bf2-8918-138d66048275/processes/4330d62a-0d6a-40c6-85a1-d58d0efd4c8f/process-runs-integrations?token=2J26rhRntfXrpH3YRdaablxaTV6S2LSiqRJKRba0Tbnlz8S25WHB3y8L2HRri1zWEQzLW43Fb2qTup6u2VwLYpXrff5ovPYtk6QE5WkIIw6RkSc8jnGI7J4uJwFc", {
-     "method": "post",
-     "headers": {
-         "Content-Type": "application/json",
-         "Authorization": "RC-WSKEY 2J26rhRntfXrpH3YRdaablxaTV6S2LSiqRJKRba0Tbnlz8S25WHB3y8L2HRri1zWEQzLW43Fb2qTup6u2VwLYpXrff5ovPYtk6QE5WkIIw6RkSc8jnGI7J4uJwFc"
-     },
-     "body": "{\"any\":\"valid json\"}"
- }).then((response) => {
-     console.log('Response:', response.data);
-     job_id = response.data.id
- })
-     .catch((error) => {
-         console.error('Error:', error);
-     });
+let job_id = "";
 
- 
-let conditionMet = false;
+const runProcessAndFetchData = async (jobid) => {
+    try {
+        const processRunResponse = await axios.post(
+            `https://cloud.robocorp.com/api/v1/workspaces/${jobid}/processes/4ab45364-0dc9-4714-80b5-feb0f1bf6f23/process-runs-integrations?token=8x4rxUMY3pKRPxLmJxLsyEyAoeMuWs2FfBHpzKyHMUKtOz8s4dkdBowWVoPhd0ccgVEiawFhIwFFgjJz7y2JYqWGoTXzoo577eLcfPFOMj7ObqGZ0ooHyhMht`,
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "RC-WSKEY 8x4rxUMY3pKRPxLmJxLsyEyAoeMuWs2FfBHpzKyHMUKtOz8s4dkdBowWVoPhd0ccgVEiawFhIwFFgjJz7y2JYqWGoTXzoo577eLcfPFOMj7ObqGZ0ooHyhMht"
+                },
+                data: {
+                    "any": "valid json"
+                }
+            }
+        );
 
- //Define the API request function
- const makeApiRequest = async () => {
-     try {
-         const response = await axios.get(`https:cloud.robocorp.com/api/v1/workspaces/29f4b8c4-0f50-4bf2-8918-138d66048275/process-runs/${job_id}`, {
-             "method": "get",
-             "headers": {
-                 "Content-Type": "application/json",
-                 "Authorization": "RC-WSKEY 2J26rhRntfXrpH3YRdaablxaTV6S2LSiqRJKRba0Tbnlz8S25WHB3y8L2HRri1zWEQzLW43Fb2qTup6u2VwLYpXrff5ovPYtk6QE5WkIIw6RkSc8jnGI7J4uJwFc"
-             }
-         });
-         console.log(response.data);
-          //Check the condition here
-         console.log(response.data.state)
-         if (response.data.state === 'completed') {
-             conditionMet = true;
-         }
-     } catch (error) {
-         console.error('Error fetching data from API', error);
-     }
- };
+        job_id = processRunResponse.data.id;
 
- //Call the API request function every 20 seconds until the condition is met
- const intervalId = setInterval(async () => {
-     if (!conditionMet) {
-         await makeApiRequest();
-     } else {
-         await getreplicationdata();
-         clearInterval(intervalId);  //Break the loop
-     }
- }, 20000 * 5);  //20 seconds in milliseconds
+        const getReplicationData = async (jobid) => {
+            try {
+                const response = await axios.get(
+                    `https://cloud.robocorp.com/api/v1/workspaces/${jobid}/assets/d189e8ff-918b-4ab7-93ad-51bc368473d7`,
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "RC-WSKEY a5fs11lR3Im5sZ69RYlY320ECWVg5kGulTIsK6hC8l4qFfoeOijFeJkAQjr4VeolrGeMwfLcwt7Kv6kbPCdtTx9dCR61WbD829k2ERBNG0Hd8LPgXIMRxAo6e"
+                        }
+                    }
+                );
 
- const getreplicationdata = async() =>{
-     axios.get(`https:cloud.robocorp.com/api/v1/workspaces/29f4b8c4-0f50-4bf2-8918-138d66048275/assets/ce053823-64ce-41a0-8328-8e53d81d03da`, {
-         "method": "get",
-         "headers": {
-             "Content-Type": "application/json",
-             "Authorization": "RC-WSKEY bedr5EeJvo0pa0hdhF1CSxAQO2is0gLnXHuh1ySqGNnFyGfNaVZEEAmLXVihJ5laU8OmWc5JnaibtVgFMRFD6omB9bnhC9JUMKLHZU5fg4dpbOMCPMb1yEgXs6GIKY1xL"
-         }
-     }).then((response) => {
-         console.log('Response:', response.data);
-         const url = response.data.payload.url
-         axios.get(url).then(response => {
-             console.log(response.data);
-           })
-           .catch(error => {
-             console.error('Error fetching data from the URL', error);
-           });
-     })
-         .catch((error) => {
-             console.error('Error:', error);
-         });
- }
+                if (response.status === 200) {
+                    const url = response.data.payload.url;
+                    const urlResponse = await axios.get(url);
 
- //Define the API request function
+                    console.log('-------------------------------');
+                    console.log('output sent');
+                    console.log('-------------------------------');
 
+                    let url_output = urlResponse.data;
+                    return url_output;
+                } else {
+                    console.error('Unexpected response status:', response.status);
+                }
+            } catch (error) {
+                console.error('Error fetching replication data', error);
+            }
+        };
+
+        const makeApiRequest = async () => {
+            try {
+                const response = await axios.get(
+                    `https://cloud.robocorp.com/api/v1/workspaces/${jobid}/process-runs/${job_id}`,
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "RC-WSKEY 8x4rxUMY3pKRPxLmJxLsyEyAoeMuWs2FfBHpzKyHMUKtOz8s4dkdBowWVoPhd0ccgVEiawFhIwFFgjJz7y2JYqWGoTXzoo577eLcfPFOMj7ObqGZ0ooHyhMht"
+                        }
+                    }
+                );
+
+                if (response.status === 200) {
+                    console.log(response.data);
+
+                    if (response.data.state === 'completed') {
+                        let fin_out = await getReplicationData(jobid);
+                        return fin_out
+                        // clearInterval(intervalId);
+                    }
+                } else {
+                    console.error('Unexpected response status:', response.status);
+                }
+            } catch (error) {
+                console.error('Error fetching data from API', error);
+            }
+        };
+
+        // Call the API request function every 'interval' milliseconds until the condition is met
+        const interval = 20000 * 5; // 20 seconds in milliseconds
+        const intervalId = setInterval(async () => {
+            await makeApiRequest();
+        }, interval);
+
+
+
+    } catch (error) {
+        console.error('Error starting process run', error);
+    }
+};
+
+// const getReplicationData = async (jobid) => {
+//     try {
+//         const response = await axios.get(
+//             `https://cloud.robocorp.com/api/v1/workspaces/${jobid}/assets/d189e8ff-918b-4ab7-93ad-51bc368473d7`,
+//             {
+//                 headers: {
+//                     "Content-Type": "application/json",
+//                     "Authorization": "RC-WSKEY a5fs11lR3Im5sZ69RYlY320ECWVg5kGulTIsK6hC8l4qFfoeOijFeJkAQjr4VeolrGeMwfLcwt7Kv6kbPCdtTx9dCR61WbD829k2ERBNG0Hd8LPgXIMRxAo6e"
+//                 }
+//             }
+//         );
+
+//         if (response.status === 200) {
+//             const url = response.data.payload.url;
+//             const urlResponse = await axios.get(url);
+
+//             console.log('-------------------------------');
+//             console.log('output sent');
+//             console.log('-------------------------------');
+
+//             let url_output = urlResponse.data;
+//             return url_output;
+//         } else {
+//             console.error('Unexpected response status:', response.status);
+//         }
+//     } catch (error) {
+//         console.error('Error fetching replication data', error);
+//     }
+// };
+
+export const getRPA = async (jobid) => {
+    const output = await runProcessAndFetchData(jobid);
+    return output;
+};
+
+export const getSend = async () => {
+    console.log("output in getSend");
+    return "success";
+};
+
+export const getCheck = async (output) => {
+    console.log(`${output} output in getcheck`);
+    return output;
+};
