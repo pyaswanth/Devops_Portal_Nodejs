@@ -31,7 +31,7 @@ const DiGiAssist = async(req) => {
 
         // const dataarray = ["users list", "Management-VM", "3394"]
 
-        const dataarray = ["running services", "Management-VM", "N/A"]
+        const dataarray = ["running services", "localhost", "N/A"]
 
 
         let result = "";
@@ -61,7 +61,8 @@ const DiGiAssist = async(req) => {
             let command;
             if (streamLineResult[1] === "RPA") {
 
-                command = await getRPA(dataarray);
+                let jobid = await getJobID()
+                output = await rpaExecution(jobid);
 
             }
             else if (streamLineResult[1] === "Ansible") {

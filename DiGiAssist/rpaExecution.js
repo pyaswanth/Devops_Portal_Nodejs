@@ -1,77 +1,87 @@
 
 import axios from 'axios';
-let job_id = ""
 
- axios.post("https:cloud.robocorp.com/api/v1/workspaces/29f4b8c4-0f50-4bf2-8918-138d66048275/processes/4330d62a-0d6a-40c6-85a1-d58d0efd4c8f/process-runs-integrations?token=2J26rhRntfXrpH3YRdaablxaTV6S2LSiqRJKRba0Tbnlz8S25WHB3y8L2HRri1zWEQzLW43Fb2qTup6u2VwLYpXrff5ovPYtk6QE5WkIIw6RkSc8jnGI7J4uJwFc", {
-     "method": "post",
-     "headers": {
-         "Content-Type": "application/json",
-         "Authorization": "RC-WSKEY 2J26rhRntfXrpH3YRdaablxaTV6S2LSiqRJKRba0Tbnlz8S25WHB3y8L2HRri1zWEQzLW43Fb2qTup6u2VwLYpXrff5ovPYtk6QE5WkIIw6RkSc8jnGI7J4uJwFc"
-     },
-     "body": "{\"any\":\"valid json\"}"
- }).then((response) => {
-     console.log('Response:', response.data);
-     job_id = response.data.id
- })
-     .catch((error) => {
-         console.error('Error:', error);
-     });
 
- 
-let conditionMet = false;
 
- //Define the API request function
- const makeApiRequest = async () => {
-     try {
-         const response = await axios.get(`https:cloud.robocorp.com/api/v1/workspaces/29f4b8c4-0f50-4bf2-8918-138d66048275/process-runs/${job_id}`, {
-             "method": "get",
-             "headers": {
-                 "Content-Type": "application/json",
-                 "Authorization": "RC-WSKEY 2J26rhRntfXrpH3YRdaablxaTV6S2LSiqRJKRba0Tbnlz8S25WHB3y8L2HRri1zWEQzLW43Fb2qTup6u2VwLYpXrff5ovPYtk6QE5WkIIw6RkSc8jnGI7J4uJwFc"
-             }
-         });
-         console.log(response.data);
-          //Check the condition here
-         console.log(response.data.state)
-         if (response.data.state === 'completed') {
-             conditionMet = true;
-         }
-     } catch (error) {
-         console.error('Error fetching data from API', error);
-     }
- };
+export const rpaExecution = (jobname) => {
+    
+    let job_id = ""
+    let rpaOutput = ""
 
- //Call the API request function every 20 seconds until the condition is met
- const intervalId = setInterval(async () => {
-     if (!conditionMet) {
-         await makeApiRequest();
-     } else {
-         await getreplicationdata();
-         clearInterval(intervalId);  //Break the loop
-     }
- }, 20000 * 5);  //20 seconds in milliseconds
+    axios.post("https://cloud.robocorp.com/api/v1/workspaces/cca1acb0-1996-429b-9e6c-84a9a728dc4f/processes/4ab45364-0dc9-4714-80b5-feb0f1bf6f23/process-runs-integrations?token=8x4rxUMY3pKRPxLmJxLsyEyAoeMuWs2FfBHpzKyHMUKtOz8s4dkdBowWVoPhd0ccgVEiawFhIwFFgjJz7y2JYqWGoTXzoo577eLcfPFOMj7ObqGZ0ooHyhMht", {
+        "method": "post",
+        "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "RC-WSKEY 8x4rxUMY3pKRPxLmJxLsyEyAoeMuWs2FfBHpzKyHMUKtOz8s4dkdBowWVoPhd0ccgVEiawFhIwFFgjJz7y2JYqWGoTXzoo577eLcfPFOMj7ObqGZ0ooHyhMht"
+        },
+        "body": "{\"any\":\"valid json\"}"
+    }).then((response) => {
+        console.log('Response:', response.data);
+        job_id = response.data.id
+    })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 
- const getreplicationdata = async() =>{
-     axios.get(`https:cloud.robocorp.com/api/v1/workspaces/29f4b8c4-0f50-4bf2-8918-138d66048275/assets/ce053823-64ce-41a0-8328-8e53d81d03da`, {
-         "method": "get",
-         "headers": {
-             "Content-Type": "application/json",
-             "Authorization": "RC-WSKEY bedr5EeJvo0pa0hdhF1CSxAQO2is0gLnXHuh1ySqGNnFyGfNaVZEEAmLXVihJ5laU8OmWc5JnaibtVgFMRFD6omB9bnhC9JUMKLHZU5fg4dpbOMCPMb1yEgXs6GIKY1xL"
-         }
-     }).then((response) => {
-         console.log('Response:', response.data);
-         const url = response.data.payload.url
-         axios.get(url).then(response => {
-             console.log(response.data);
-           })
-           .catch(error => {
-             console.error('Error fetching data from the URL', error);
-           });
-     })
-         .catch((error) => {
-             console.error('Error:', error);
-         });
- }
 
- //Define the API request function
+    let conditionMet = false;
+
+    // Define the API request function
+    const makeApiRequest = async () => {
+        try {
+            const response = await axios.get(`https://cloud.robocorp.com/api/v1/workspaces/cca1acb0-1996-429b-9e6c-84a9a728dc4f/process-runs/${job_id}`, {
+                "method": "get",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Authorization": "RC-WSKEY 8x4rxUMY3pKRPxLmJxLsyEyAoeMuWs2FfBHpzKyHMUKtOz8s4dkdBowWVoPhd0ccgVEiawFhIwFFgjJz7y2JYqWGoTXzoo577eLcfPFOMj7ObqGZ0ooHyhMht"
+                }
+            });
+            console.log(response.data);
+            //Check the condition here
+            console.log(response.data.state)
+            if (response.data.state === 'completed') {
+                conditionMet = true;
+            }
+        } catch (error) {
+            console.error('Error fetching data from API', error);
+        }
+    };
+
+    //Call the API request function every 20 seconds until the condition is met
+    const intervalId = setInterval(async () => {
+        if (!conditionMet) {
+            await makeApiRequest();
+        } else {
+            rpaOutput = await getreplicationdata();
+            clearInterval(intervalId);  //Break the loop
+        }
+    }, 20000 * 5);  //20 seconds in milliseconds
+
+    const getreplicationdata = async () => {
+        axios.get(`https://cloud.robocorp.com/api/v1/workspaces/cca1acb0-1996-429b-9e6c-84a9a728dc4f/assets/d189e8ff-918b-4ab7-93ad-51bc368473d7`, {
+            "method": "get",
+            "headers": {
+                "Content-Type": "application/json",
+                "Authorization": "RC-WSKEY a5fs11lR3Im5sZ69RYlY320ECWVg5kGulTIsK6hC8l4qFfoeOijFeJkAQjr4VeolrGeMwfLcwt7Kv6kbPCdtTx9dCR61WbD829k2ERBNG0Hd8LPgXIMRxAo6e"
+            }
+        }).then((response) => {
+            console.log('Response:', response.data);
+            const url = response.data.payload.url
+            axios.get(url).then(response => {
+                console.log(response.data);
+                return response.data
+            })
+                .catch(error => {
+                    console.error('Error fetching data from the URL', error);
+                });
+        })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+    return rpaOutput
+}
+
+//Define the API request function
 

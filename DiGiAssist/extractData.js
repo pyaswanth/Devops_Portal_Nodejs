@@ -43,7 +43,7 @@ export const getCommand = (modelOutput) => {
     return `ansible-playbook -e "sysid=${modelOutput[1]}" ${location}list-open-ports.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "running services") {
-    return `ansible-playbook -e "sysid=${modelOutput[1]}" $7{location}get-running-services.yml`
+    return `ansible-playbook -e "sysid=${modelOutput[1]}" ${location}get-running-services.yml`
   }
   else if (modelOutput[0].toLowerCase().trim() === "users list") {
     return `ansible-playbook -e "sysid=${modelOutput[1]}" ${location}get-users.yml`
